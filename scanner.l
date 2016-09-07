@@ -16,7 +16,6 @@ Scanner in FLEX for the Simple Language (SL)
 }%
 \n	++num_lines;
 
-<<EOF>>	
 
 %{
 	/*Block comment scanner*/
@@ -33,10 +32,12 @@ Scanner in FLEX for the Simple Language (SL)
 				}
 				if ( c == EOF ) {
 					error("EOF in comment");
+					return (UNFINISHED_COMMENT);
 					break;
+				}else{
+					return (UNFINISHED_COMMENT);
 				}
 			}
-			/*Do something*/
 		}
 
 %{
@@ -52,34 +53,72 @@ Scanner in FLEX for the Simple Language (SL)
 				}
 				if (c == EOF) {
 					error ("EOF in comment");
+					return (UNFINISHED_COMMENT);
 					break;
+				}else{
+					return (UNFINISHED_COMMENT);
 				}
 			}
 		}
 %{
 /* Symbols */
 %}
-"+"	
-"-"	
-"*"	
-"/"	
-"("	
-")"	
-"&&"	
-"||"	
-"=="
-"!="
-"<"
-">"
-"<="
-">="
-";"
-":"
+"+"	return (PLUS);
+"*"	return (MULTIPLY)
+"-"	return (MINUS);
+"/"	return (DIV);
+
+"("	return (OPEN_PAREN);
+")"	return (CLOSE_PAREN);
+"{"	return (OPEN_BRACE);
+"}"	return (CLOSE_BRACE);
+"["	return (OPEN_BRACKET);
+"]"	return (CLOSE_BRACKET);
+
+"&&"	return (AND);
+"||"	return (OR);
+"=="	return (EQUAL);
+"!="	return (DIFFERENT);
+"<"	return (LESS);
+">"	return (GREATER);
+"<="	return (LESS_OR_EQUAL);
+">="	return (GREATER_OR_EQUAL);
+
+";"	return (SEMI_COLON);
+":" return (COLON);
+","	return (COMMA);
+
+%{
+/*  */
+%}
+[0-9]+	return (INTEGER);
+
+%{
+/* Reserved words */
+%}
+
+goto	return (GOTO);
+void	return (VOID);
+functions
+vars	return (VARS);
+var	return(VAR);
+while	return (WHILE);
+if	
+else
+void
+labels
 
 %{
 /* Identifiers and integers */
 %}
 [a-z]
+[0-9]
+
+%{
+/* Identifiers and integers */
+%}
+[a-z]
+[0-9]
 %%
 
 main( argc, argv) {
