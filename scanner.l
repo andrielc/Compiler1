@@ -6,7 +6,9 @@ Scanner in FLEX for the Simple Language (SL)
 	/*
 	#include <parser.h>
 	int num_lines = 0;
-
+	extern char *yytext;
+	DIG	[0-9]
+	ALPHA [a-z]|[A-Z]
 }%
 
 %%
@@ -89,9 +91,10 @@ Scanner in FLEX for the Simple Language (SL)
 ","	return (COMMA);
 
 %{
-/*  */
+/*Identiers and Integers*/
 %}
-[0-9]+	return (INTEGER);
+
+DIG+	return (INTEGER);
 
 %{
 /* Reserved words */
@@ -99,14 +102,16 @@ Scanner in FLEX for the Simple Language (SL)
 
 goto	return (GOTO);
 void	return (VOID);
-functions
+functions return (FUNCTIONS);
 vars	return (VARS);
 var	return(VAR);
 while	return (WHILE);
-if	
-else
-void
-labels
+if	return (IF);
+else return (ELSE);
+void return (VOID);
+labels return (LABELS);
+return	return (RETURN);
+types return (TYPES);
 
 %{
 /* Identifiers and integers */
@@ -121,7 +126,6 @@ labels
 [0-9]
 %%
 
-main( argc, argv) {
-
-
+int yylex () {
+	return 1;
 }
