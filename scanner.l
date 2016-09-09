@@ -7,21 +7,14 @@ Scanner in FLEX for the Simple Language (SL)
 	#include <parser.h>
 	int num_lines = 0;
 	extern char *yytext;
-	DIG	[0-9]
-	ALPHA [a-z]|[A-Z]
-}%
+	DIG	[0-9];
+%}
 
 %%
 
 %{
-	/*Lines counter*/
-}%
-\n	++num_lines;
-
-
-%{
 	/*Block comment scanner*/
-}%
+%}
 "/*"	{
 			register int c;
 			for ( ; ; )
@@ -44,7 +37,7 @@ Scanner in FLEX for the Simple Language (SL)
 
 %{
 	/*Line comment*/
-}%
+%}
 "//"	{
 			register int c;
 			for ( ; ; )
@@ -81,14 +74,14 @@ Scanner in FLEX for the Simple Language (SL)
 "||"	return (OR);
 "=="	return (EQUAL);
 "!="	return (DIFFERENT);
-"<"	return (LESS);
-">"	return (GREATER);
+'<'	return (LESS);
+'>'	return (GREATER);
 "<="	return (LESS_OR_EQUAL);
 ">="	return (GREATER_OR_EQUAL);
 
-";"	return (SEMI_COLON);
-":" return (COLON);
-","	return (COMMA);
+';'	return (SEMI_COLON);
+':' return (COLON);
+','	return (COMMA);
 
 %{
 /*Identiers and Integers*/
@@ -108,22 +101,10 @@ var	return(VAR);
 while	return (WHILE);
 if	return (IF);
 else return (ELSE);
-void return (VOID);
 labels return (LABELS);
 return	return (RETURN);
 types return (TYPES);
 
-%{
-/* Identifiers and integers */
-%}
-[a-z]
-[0-9]
-
-%{
-/* Identifiers and integers */
-%}
-[a-z]
-[0-9]
 %%
 
 int yylex () {
