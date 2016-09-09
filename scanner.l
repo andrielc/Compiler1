@@ -3,7 +3,6 @@ Scanner in FLEX for the Simple Language (SL)
 */
 
 %{
-	/*
 	#include <parser.h>
 	int num_lines = 0;
 	extern char *yytext;
