@@ -3,10 +3,9 @@ Scanner in FLEX for the Simple Language (SL)
 */
 
 %{
-	#include <parser.h>
+	#include "parser.h"
 	int num_lines = 0;
 	extern char *yytext;
-	DIG	[0-9];
 %}
 
 %%
@@ -58,7 +57,7 @@ Scanner in FLEX for the Simple Language (SL)
 /* Symbols */
 %}
 "+"	return (PLUS);
-"*"	return (MULTIPLY)
+"*"	return (MULTIPLY);
 "-"	return (MINUS);
 "/"	return (DIV);
 
@@ -85,8 +84,10 @@ Scanner in FLEX for the Simple Language (SL)
 %{
 /*Identiers and Integers*/
 %}
+[a-z][a-z0-9]*		{strcpy((token_value=malloc(yyleng+1)),yytext);
+                         return(IDENTIFIER);}
+[0-9]+			{strcpy((token_value=malloc(yyleng+1)),yytext);
 
-DIG+	return (INTEGER);
 
 %{
 /* Reserved words */
@@ -109,3 +110,5 @@ types return (TYPES);
 int yylex () {
 	return 1;
 }
+
+http://flex.sourceforge.net/manual/Quoted-Constructs.html#Quoted-Constructs
