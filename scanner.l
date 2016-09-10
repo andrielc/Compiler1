@@ -1,5 +1,5 @@
 /*
-Scanner in FLEX for some rules of the Simple Language (SL)
+Scanner in FLEX for the Simple Language (SL)
 */
 
 %{
@@ -55,31 +55,31 @@ Scanner in FLEX for some rules of the Simple Language (SL)
 %{
 /* Symbols */
 %}
-"+"	{return PLUS;}
-"*"	{return MULTIPLY;}
-"-"	{return MINUS;}
-"/"	{return DIV;}
+"+"	return(PLUS);
+"*"	return(MULTIPLY);
+"-"	return(MINUS);
+"/"	return(DIV);
 
-"("	{return OPEN_PAREN;}
-")"	{return	CLOSE_PAREN;}
-"["	{return OPEN_BRACKET;}
-"]"	{return CLOSE_BRACKET;}
-"{"	{return OPEN_BRACE;}
-"}"	{return CLOSE_BRACE;}
+"("	return(OPEN_PAREN);
+")"	return(CLOSE_PAREN);
+"["	return(OPEN_BRACKET);
+"]"	return(CLOSE_BRACKET);
+"{"	return(OPEN_BRACE);
+"}"	return(CLOSE_BRACE);
 
-"&&"	{return AND;}
-"||"	{return OR;}
-"=="	{return EQUAL;}
-"!="	{return DIFFERENT;}
-"<"	{return LESS;}
-">"	{return GREATER;}
-"<="	{return LESS_OR_EQUAL;}
-">="	{return GREATER_OR_EQUAL;}
-"="	{return ASSIGN;}
+"&&"	return(AND);
+"||"	return(OR);
+"=="	return(EQUAL);
+"!="	return(DIFFERENT);
+"<"	return(LESS);
+">"	return(GREATER);
+"<="	return(LESS_OR_EQUAL);
+">="	return(GREATER_OR_EQUAL);
+"="	return(ASSIGN);
 
-";"	{return SEMI_COLON;}
-":"	{return COLON;}
-","	{return COMMA;}
+";"	return(SEMI_COLON);
+":"	return(COLON);
+","	return(COMMA);
 
 %{
 	/*Identifiers and Integer*/
@@ -90,7 +90,7 @@ Scanner in FLEX for some rules of the Simple Language (SL)
 %{
 	/* Error repport */
 %}
-.	{return(LEXICAL_ERROR);}
+.	return(LEXICAL_ERROR);
 
 %%
 
