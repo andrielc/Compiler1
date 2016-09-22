@@ -3,8 +3,10 @@ Scanner in FLEX for some rules of the Simple Language (SL)
 */
 
 %{
-	#include "parser.h"
-	int line_num = 1;
+
+#include "parser.h"
+int line_num = 1;
+
 %}
 
 %x IN_COMMENT
