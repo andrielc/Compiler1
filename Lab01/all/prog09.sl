@@ -1,4 +1,4 @@
-/* Trivial test */
+/ * Trivial test */
 
 void Example()
 {
