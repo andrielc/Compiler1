@@ -119,6 +119,50 @@ void genCodeLabel1(char *instr, int label, int param ) {
 	printf("L%d:\t%s\t%d\n", label, instr, param);
 }
 
+
+SymbEntryPtr findSymbol(char *c, int type){
+	SymbEntryPtr sym = symbTable;
+	while(sym != NULL){
+		if(!strcmp(c,sym->ident) && (!type || sym->categ == S_TYPE))
+			break;
+		sym=sym->next;
+	}
+	if(sym == NULL)
+		SemanticError(NULL);
+	return sym;
+}
+
+void processTypes (TreeNodePtr tnp) {
+	TypeDescrPtr type = NULL;
+	SymbEntryPtr aux = NULL;
+	while (tnp != NULL) {
+		aux = findSymbol (tnp->comps[1]->comps[0]->str,1); //identifier
+		type = aux;
+		if (tnp->comprs[1]->comprs[1] != NULL) { //type to array
+			TreeNodePtr np = tnp->comps[1]->comps[1];
+			int mult = 1, dim = 0;
+			while (np != NULL) {
+				dim++
+				mult *= atoi(np->str);
+				np = np->next;
+			}
+			type = type(T_ARRAY,type,mult*type->size,dim);
+		}
+		symbol(S_TYPE, p->comps[0],k,type,1) //identifier
+		tnp = tnp->next;
+	}
+
+}
+
+
+void processLabels(TreeNodePtr np){
+	while (np != NULL) {
+		symbol(S_LABEL, np->str, k, NULL, 1, newLabel(), 0);
+		np = np->next;
+	}
+	return;
+}
+
 SymbEntryPtr processFParams(TreeNodePtr np,int *lastDispl){
 	TreeNodePtr tnp=NULL;
 	SymbEntry sep;
@@ -130,8 +174,9 @@ SymbEntryPtr processFParams(TreeNodePtr np,int *lastDispl){
 	if (np == NULL){
 		return NULL;
 	}
-	SymbEntryPtr aux = getSymbol(np->comps[1]->str,1);
+	
 	if(np->categ == C_VARIABLE){
+		SymbEntryPtr aux = findSymbol(np->comps[1]->str,1);
 		type = aux->type;
 		tn = np->comps[0];
 		while(tnp != NULL){
@@ -157,27 +202,6 @@ SymbEntryPtr processFParams(TreeNodePtr np,int *lastDispl){
 		//TODO: função como parametro
 	}
 	return sep;
-}
-
-SymbEntryPtr getSymbol(char *c, int type){
-	SymbEntryPtr sym = symbTable;
-	while(sym != NULL){
-		if(!strcmp(c,sym->ident) && (!type || sym->categ==S_TYPE))
-			break;
-		sym=sym->next;
-	}
-	if(sym == NULL)
-		SemanticError(NULL);
-	return sym;
-}
-
-
-void processLabels(TreeNodePtr np){
-	while (np != NULL) {
-		symbol(S_LABEL, np->str, k, NULL, 1, newLabel(), 0);
-		np = np->next;
-	}
-	return;
 }
 
 void processFuncDeclaration (TreeNodePtr p, int ismain) {	
