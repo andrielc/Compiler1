@@ -7,7 +7,7 @@ Scanner in Yacc for grammar production in Simple Language (SL)
 #include<stdlib.h>
 #include<stdio.h>
 
-TreeNodePtr tree;
+TreeNodePtr tree ;
 int stackheight;
 char *empty="empty";
 
@@ -60,7 +60,7 @@ int yyerror(char *s);
 %token		TYPES
 %token		VAR
 %token		VARS
-%token	<string>	VOID
+%token		VOID
 %token		WHILE
 %token		UNFINISHED_COMMENT
 %token		LEXICAL_ERROR
@@ -69,7 +69,7 @@ int yyerror(char *s);
 %%
 
 program : 
-		function {stackheight = yylen; tree = $1; /*dumpTree(tree,0,"\t")*/;} end_of_file
+		function {stackheight=yylen;tree = $1; /* dumpTree(tree,0,"\t")*/;} end_of_file
 	    ;
 
 end_of_file :
@@ -87,45 +87,45 @@ block :
 		;
 
 labels : 
-		LABELS identifier_list SEMI_COLON { $$ = $2; }
+		LABELS identifier_list SEMI_COLON { $$ = inversao($2); }
 		|
 		{$$ = genNode2(C_LABEL,empty);}
 		;
 
 types :
-		TYPES types_list { $$ = inversao($2); }
+		TYPES types_list { $$ = inversao($2);  }
 		|
 		{$$ = genNode2(C_TYPE,empty);}
 		;
 
 types_list :
-		identifier ASSIGN type SEMI_COLON {$$ = genNode4(C_TYPE,NULL,$1,$3);}
+		identifier ASSIGN type SEMI_COLON {$$ = genNode4(C_TYPE,NULL,$1,$3); }
 		|
 		types_list identifier ASSIGN type SEMI_COLON {$$ = genNode4(C_TYPE,NULL,$2,$4); $$->next = $1;}
 		;
 		
 variables :
-		VARS variables_list { $$ = inversao($2); }
+		VARS variables_list { $$ = $2; }
 		|
 		{$$ = genNode2(C_VARIABLE,empty);}
 		;
 
 variables_list :
-		identifier_list COLON type SEMI_COLON  {$$ = genNode4(C_VARIABLE,NULL,$1,$3);}
+		identifier_list COLON type SEMI_COLON  {$$ = genNode4(C_VARIABLE,NULL,inversao($1),$3);  }
 		|
-		variables_list identifier_list COLON type SEMI_COLON {$$ = genNode4(C_VARIABLE,NULL,$2,$4); $$->next = $1;}
+		variables_list identifier_list COLON type SEMI_COLON {$$ = genNode4(C_VARIABLE,NULL,inversao($2),$4); $$->next = $1;}
 		;
 
 functions :
 		FUNCTIONS functions_list  {$$ = inversao($2);}
 		|
-		{}
+		{$$ = genNode2(C_FUNCTION,empty);}
 		;
 
 functions_list : 
 		function
 		|
-		functions_list function {$2->next = $1; $$ = inversao($2);}
+		functions_list function {$2->next = $1; $$ = $2;}
 		;
 
 body : 
@@ -139,13 +139,13 @@ body_list :
 		;
 
 type : 
-		identifier type_list {$$ = genNode4(C_TYPE,NULL,$1,inversao($2));}
+		identifier type_list {$$ = genNode4(C_TYPE,NULL,$1,inversao($2)); }
 		;
 
-type_list :
+type_list :	
 		type_list OPEN_BRACKET integer CLOSE_BRACKET {$$ = $3; $3->next = $1;}
 		|
-		{$$ = genNode2(C_INTEGER,NULL);}
+		{$$ = genNode2(C_INTEGER,empty);}
 		;
 
 formal_parameters :
@@ -167,13 +167,13 @@ formal_parameter :
 		;
 
 expression_parameter :
-		VAR identifier_list COLON identifier {$$ = genNode4(C_POINTER,NULL,inversao($2),$4);}
+		VAR identifier_list COLON identifier {$$ = genNode4(C_POINTER,NULL,$2,$4);}
 		|
-		identifier_list COLON identifier {$$ = genNode4(C_VARIABLE,NULL,inversao($1),$3);}
+		identifier_list COLON identifier {$$ = genNode4(C_VARIABLE,NULL,$1,$3);}
 		;
 
 function_parameter : 
-		return_function identifier formal_parameters { $$ = genNode5(C_VARIABLE,NULL,$1,$2,$3);}
+		return_function identifier formal_parameters { $$ = genNode5(C_FUNCTION,NULL,$1,$2,$3);}
 		;
 
 statement : 
@@ -191,7 +191,7 @@ variable :
 variable_list :
 		variable_list OPEN_BRACKET expression CLOSE_BRACKET {$$ = $3; $3->next = $1;}
 		|
-		{$$ = genNode2(C_INTEGER,NULL);}
+		{$$ = genNode2(C_INTEGER,empty);}
 		;
 
 unlabeled_statement :
@@ -343,11 +343,11 @@ expression_list :
 		;
 
 identifier : 
-		IDENTIFIER {$$ = genNode2(C_IDENT,$1);}
+		IDENTIFIER {$$ = genNode2(C_IDENT,$1); }
 		;
 
 integer :
-		INTEGER { $$ = genNode2(C_INTEGER,$1);}
+		INTEGER { $$ = genNode2(C_INTEGER,$1); }
 		;
 
 return_function :
