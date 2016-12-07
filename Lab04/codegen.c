@@ -7,7 +7,7 @@
 
 int label=1,k=-1; //contar label
 SymbEntryPtr symbTable = NULL;
-TypeDescrPtr Bool, Int;
+TypeDescrPtr predefBool, predefInt;
 
 int newLabel () {
 	return label++;
@@ -37,7 +37,7 @@ SymbEntryPtr symbol(SymbCateg categ, char *ident, int k, TypeDescrPtr type, int 
 	se->k = k;
 	se->type = type;
 	
-	if (add != 0) { //TODO: verificar
+	if (add != 0) {
 		se->next = symbTable;
 		symbTable = se;
 	}
@@ -74,18 +74,18 @@ SymbEntryPtr symbol(SymbCateg categ, char *ident, int k, TypeDescrPtr type, int 
 
 void processProgram(void *prog){
 	//slide 196 "palavras reservadas"
-	Bool = type (T_PREDEF,NULL,1,0,NULL);
-	Int = type (T_PREDEF,NULL,1,0,NULL);
+	predefBool = type (T_PREDEF,NULL,1,0,NULL);
+	predefInt = type (T_PREDEF,NULL,1,0,NULL);
 
-	symbol (S_TYPE,"integer",-1,Int,1);
-	symbol (S_TYPE,"boolean",-1,Int,1);
-	symbol (S_CONST,"true",-1,Bool,1);
-	symbol (S_CONST,"false",-1,Bool,1);
+	symbol (S_TYPE,"integer",-1,predefInt,1);
+	symbol (S_TYPE,"boolean",-1,predefInt,1);
+	symbol (S_CONST,"true",-1,predefBool,1);
+	symbol (S_CONST,"false",-1,predefBool,1);
 	symbol (S_FUNCTION,"read",-1,NULL,1,-1,1);
 	symbol (S_FUNCTION,"write",-1,NULL,1,-1,1);
 
 	genCode0("MAIN");
-	processFuncDecl(p,1);
+	//processFuncDecl(prog,1);
 	genCode0("END");
 	
 }
@@ -133,22 +133,22 @@ SymbEntryPtr findSymbol(char *c, int type){
 }
 
 void processTypes (TreeNodePtr tnp) {
-	TypeDescrPtr type = NULL;
 	SymbEntryPtr aux = NULL;
+	TypeDescrPtr t = NULL;
 	while (tnp != NULL) {
 		aux = findSymbol (tnp->comps[1]->comps[0]->str,1); //identifier
-		type = aux;
-		if (tnp->comprs[1]->comprs[1] != NULL) { //type to array
+		t = aux->type;
+		if (tnp->comps[1]->comps[1] != NULL) { //type -> array
 			TreeNodePtr np = tnp->comps[1]->comps[1];
 			int mult = 1, dim = 0;
 			while (np != NULL) {
-				dim++
+				dim++;
 				mult *= atoi(np->str);
 				np = np->next;
 			}
-			type = type(T_ARRAY,type,mult*type->size,dim);
+			t = type(T_ARRAY,t,mult*(t->size),dim,NULL);
 		}
-		symbol(S_TYPE, p->comps[0],k,type,1) //identifier
+		symbol(S_TYPE, tnp->comps[0]->str,k,t,1); //identifier
 		tnp = tnp->next;
 	}
 
@@ -165,10 +165,7 @@ void processLabels(TreeNodePtr np){
 
 SymbEntryPtr processFParams(TreeNodePtr np,int *lastDispl){
 	TreeNodePtr tnp=NULL;
-	SymbEntry sep;
-	SymbEntryPtr next;
-	TypeDescrPtr type;
-	
+	SymbEntryPtr sep, next;
 	next = processFParams(np->next,lastDispl);
 
 	if (np == NULL){
@@ -177,10 +174,9 @@ SymbEntryPtr processFParams(TreeNodePtr np,int *lastDispl){
 	
 	if(np->categ == C_VARIABLE){
 		SymbEntryPtr aux = findSymbol(np->comps[1]->str,1);
-		type = aux->type;
-		tn = np->comps[0];
+		tnp = np->comps[0];
 		while(tnp != NULL){
-			(*lastDispl) -= type->size;
+			(*lastDispl) -= aux->type->size; //qtd de argumentos reservados pra pilha
 			//add simbolo
 			symbol(S_PARAMETER,tnp->str,k,aux->type,1,*lastDispl,P_VALUE);
 			sep = symbol(S_PARAMETER,tnp->str,k,aux->type,0,*lastDispl,P_VALUE);
@@ -189,9 +185,10 @@ SymbEntryPtr processFParams(TreeNodePtr np,int *lastDispl){
 			tnp = tnp->next;
 		}
 	}else if (np->categ == C_POINTER) {
-		tn = np->comps[0];
+		SymbEntryPtr aux = findSymbol(np->comps[1]->str,1);
+		tnp = np->comps[0];
 		while(tnp != NULL){
-			(*lastDispl)--;
+			(*lastDispl)--; //pointer.. precisa apenas do LADR ou LGAD
 			symbol(S_PARAMETER,tnp->str,k,aux->type,1,*lastDispl,P_VARIABLE);
 			sep = symbol(S_PARAMETER,tnp->str,k,aux->type,0,*lastDispl,P_VARIABLE);
 			sep ->next=next;
@@ -204,13 +201,108 @@ SymbEntryPtr processFParams(TreeNodePtr np,int *lastDispl){
 	return sep;
 }
 
-void processFuncDeclaration (TreeNodePtr p, int ismain) {	
-	char *name = p->comps[1]->str;
-	TypeDescrPtr restType = NULL, funType;
-	int lastDispl = -4, entLabel,retLabel ;
-	SymbolEntryPtr formals, func;
-	
-	if (!ismain) {
-		
+void processIteration(TreeNodePtr p) {
+	int label1 = newLabel();
+	int label2 = newLabel();
+	TypeDescrPtr t;
+	genCodeLabel(label1);
+	t = processExpr(p->comps[0]);
+	if (t!=predefBool)
+	    SemanticError();
+	genCodeJump("JMPF",label2);
+	processStatement(p->comps[1]);
+	genCodeJump("JUMP",label1);
+	genCodeLabel(label2);
+}
+
+void processAssign(TreeNodePtr p) { //verificar
+	TreeNodePtr pvar  = p->comps[0];
+	TreeNodePtr pexpr = p->comps[1];
+	char *id = pvar.str;
+	SymbEntryPtr ste = searchSte(id);
+	TypeDescrPtr tvar,texpr;
+	if (ste==NULL) SemanticError(); // undefined variable
+	if ((ste->categ!=S_VARIABLE)&&(ste->categ!=S_PARAMETER))
+	   SemanticError();
+	tvar = ste->descr->type;
+	texpr = processExpr(pexpr);
+	if (!compatibleTypes(tvar,texpr))
+	    SemanticError();
+	if ( (ste->categ == S_PARAMETER) && (ste->descr->pass == P_VARIABLE) ){
+	    genCode2("STVI",ste->level,ste->descr->displ);
+	}else{
+	    genCode2("STVL",ste->level,ste->descr->displ);
 	}
 }
+
+void processVariables(TreeNodePtr p) {
+    for ( ; (p!=NULL); p=p->next )
+        processVarDecl(p);
+}
+
+void processVarDecl(TreeNodePtr p) {
+    TreeNodePtr pvars = p->comps[0];
+    TypeDescrPtr ptype = p->comps[1]->type;
+    SymbEntryPtr ste;
+    char *id;
+    for ( ; (pvars!=NULL); pvars=pvars->next ) { //gerar symbol
+    	id = getIdent(pvars);
+    	ste = newSymbEntry(S_VARIABLE,id);
+    	ste->level = currentLevel; ste->descr->displ = currentDispl;
+    	ste->descr->type = ptype;
+    	insertSymbolTable(ste);  currentDispl+= ptype->size;
+	}
+}
+
+TypeDescrPtr processExpr(TreeNodePtr p) {
+    switch(p->categ) {
+        case C_IDENT:    return processExprIdent(p);
+        case C_UN_EXPR:  return processUnExpr(p);
+        case C_BIN_EXPR: return processBinExpr(p);
+        ...
+	}
+}
+
+TypeDescrPtr processUnExpr(TreeNodePtr p) {
+    char *op = p->comps[0]->str;
+    TypeDescrPtr t = processExpr(p->comps[1]);
+    if (!compatibleTypesUnOp(op,t))
+        SemanticError();
+    genCode0(mepaUnInstr(op));
+    return t;
+ }
+
+ TypeDescrPtr processBinExpr(TreeNodePtr p) {
+    TypeDescrPtr t0 = processExpr(p->comps[0]);
+    TypeDescrPtr t1 = processExpr(p->comps[2]);
+    char *op = getOp(p->comps[1]);
+    if (!compatibleTypesBinOp(op,t0,t1))
+        SemanticError();
+    genCode0(mepaBinInstr(op));
+    if (relational(op))
+        return predefBool;
+    else
+        return predefInt;
+}
+
+
+/*
+void processFuncDeclaration (TreeNodePtr np, int ismain) {	
+	char *name = np->comps[1]->str;
+	TypeDescrPtr retType = NULL, funType;
+	int lastDispl = -4, entLabel,bdLabel,retLabel ;
+	SymbEntryPtr formals, func;
+
+	entLabel = newlabel();
+
+	// 
+	if (np->comps[0]->str != NULL) {
+		SymbEntryPtr aux = getSymbol(np->comps[0]->str, 1);
+		retType = aux->type;
+	}
+
+	if (!ismain){
+		genCodeLabel1("ENFN", label,k);
+		t = type(T_FUNCTION,retType,0);
+	}
+}*/
