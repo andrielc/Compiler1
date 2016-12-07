@@ -3,12 +3,10 @@ Scanner in FLEX for some rules of the Simple Language (SL)
 */
 
 %{
-
 #include "parser.h"
 
+char *dump_string ( char* );
 int fileno(FILE *);
-char *cln(char *);
-
 int line_num = 1;
 
 %}
@@ -57,7 +55,7 @@ int line_num = 1;
      }
 
 
-<<EOF>>   return (END_OF_FILE);
+<<EOF>>   yyterminate(); return (END_OF_FILE);
 %{
 /* Symbols */
 %}
@@ -89,8 +87,8 @@ int line_num = 1;
 %{
      /*Identifiers and Integer*/
 %}
-[0-9]+    return(INTEGER);
-[A-Za-z][A-Za-z0-9]*     return(IDENTIFIER);
+[0-9]+		yylval.string = dump_string(yytext); return(INTEGER);
+[A-Za-z][A-Za-z0-9]*	yylval.string = dump_string(yytext); return(IDENTIFIER);
 
 %{
      /* Error repport */
@@ -101,4 +99,13 @@ int line_num = 1;
 
 int yywrap(){
      return 1;
+}
+
+char *dump_string (char * string) {
+	int i,len = strlen(string);
+	char *aux = malloc(sizeof(len+1));
+	for(i = 0; i < len; ++i){
+		aux[i] = string[i];
+	 }
+	return aux;
 }
