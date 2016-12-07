@@ -1,45 +1,75 @@
-#ifndef _TREE_H_
-#define _TREE_H_
+#include "tree.h"
+
 typedef enum{
-	C_FUNCTION=0,
-	C_BLOCK,
-	C_LABEL,
-	C_TYPE,
-	C_VARIABLE,
-	C_POINTER,
-	C_STATEMENT,
-	C_IF,
-	C_RETURN,
-	C_GOTO,
-	C_BIN_EXPR,
-	C_EXPR,
-	C_NEG,
-	C_ASSIGN,
-	C_WHILE,
-	C_FUNCTION_CALL,
-	C_IDENT,
-	C_INTEGER,
-	C_NOT,
-	C_OPERATOR
-} Categ;
+	T_PREDEF=1,
+	T_ARRAY,
+	T_FUNCTION
+} TypeConstr;
 
-typedef struct _treeNode{
-	Categ categ;
-	struct _treeNode *next; //list
-	struct _treeNode *comps[8];
-	char *str;   // IDENT, INTEGER or operator
-} TreeNode, *TreeNodePtr;
+typedef enum {
+	P_VALUE = 1,
+	P_VARIABLE,
+	P_FUNCTION
+} Passage;
 
-void *getTree();  // returns any pointer
-TreeNodePtr genNode2(Categ cat, char *str);
-TreeNodePtr genNode3(Categ cat, char *str, TreeNodePtr p1);
-TreeNodePtr genNode4(Categ cat, char *str, TreeNodePtr p1, TreeNodePtr p2);
-TreeNodePtr genNode5(Categ cat, char *str, TreeNodePtr p1, TreeNodePtr p2, TreeNodePtr p3);
-TreeNodePtr genNode6(Categ cat, char *str, TreeNodePtr p1, TreeNodePtr p2, TreeNodePtr p3,TreeNodePtr p4);
-TreeNodePtr genNode7(Categ cat, char *str, TreeNodePtr p1, TreeNodePtr p2, TreeNodePtr p3,TreeNodePtr p4,TreeNodePtr p5);
-TreeNodePtr inversao(TreeNodePtr tnp);
-int stackHeight();
-void counts(void *p, int *functions, int *funcalls, int *whiles, int *ifs, int *bin);
-void dumpTree(TreeNode *p, int indent,char *tab);
+typedef enum{
+	S_CONST=1,
+	S_VARIABLE,
+	S_PARAMETER,
+	S_FUNCTION,
+	S_LABEL,
+	S_TYPE
+} SymbCateg;
 
-#endif
+typedef struct _typeDescr{
+	TypeConstr constr;
+	struct _typeDescr *type;
+	int size;
+	union{
+		struct _array {
+			int dimen;
+		}array;
+		struct _func {
+			struct _symbEntry *params;
+		}func;
+	} descr;
+} TypeDescr, *TypeDescrPtr;
+
+typedef struct _symbEntry{
+	SymbCateg categ;
+	char *ident;
+	int k;
+	struct _symbEntry *next;
+	TypeDescrPtr type;
+	union{
+		struct _constant {
+			int value;
+		} constant;
+		struct _variable {
+			int displ;
+		}variable;
+		struct _formParameter {
+			int displ;
+			Passage pass;
+		}formParameter;
+		struct _function {
+			int displ;
+			struct _symbEntry *params;
+		}function;
+		struct _label {
+			char *label;
+			int defined;
+		}label;
+	} descr;
+} SymbEntry, *SymbEntryPtr;
+
+TypeDescrPtr type(TypeConstr constr, TypeDescrPtr type, int size, int dim, SymbEntryPtr pt);
+SymbEntryPtr symbol(SymbCateg categ, char *ident, int k, TypeDescrPtr type, int add, ... );
+void genCode0(char *instr);
+void genCode1(char *instr,int param);
+void genCode2(char *instr,int param1,int param2);
+void genCodeJump(char *instr, int toLabel, int param1, int param2 );
+void genCodeLabel(char *instr, int label );
+void genCodeLabel1(char *instr, int label, int param );
+void processProgram(void *tree);
+SymbEntryPtr findSymbol(char *c, int type);
