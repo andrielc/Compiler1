@@ -69,7 +69,7 @@ int yyerror(char *s);
 %%
 
 program : 
-		function {stackheight=yylen;tree = $1; /* dumpTree(tree,0,"\t")*/;} end_of_file
+		function {stackheight=yylen;tree = $1; dumpTree(tree,0,"\t");} end_of_file
 	    ;
 
 end_of_file :
@@ -107,7 +107,7 @@ types_list :
 variables :
 		VARS variables_list { $$ = $2; }
 		|
-		{$$ = genNode2(C_VARIABLE,empty);}
+		{$$ = NULL;genNode2(C_VARIABLE,empty);}
 		;
 
 variables_list :
@@ -135,7 +135,7 @@ body :
 body_list :
 		body_list statement {$2->next = $1; $$ = $2;}
 		|
-		{$$ = genNode2(C_STATEMENT,empty);}
+		{$$ = NULL;genNode2(C_STATEMENT,empty);}
 		;
 
 type : 
@@ -157,7 +157,7 @@ formal_parameters_list :
 		|
 		formal_parameters_list SEMI_COLON formal_parameter {$$ = $3; $3->next = $1;}
 		|
-		{$$=genNode2(C_TYPE,empty);}
+		{$$= genNode2(C_TYPE,empty);}
 		;
 
 formal_parameter : 
@@ -191,7 +191,7 @@ variable :
 variable_list :
 		variable_list OPEN_BRACKET expression CLOSE_BRACKET {$$ = $3; $3->next = $1;}
 		|
-		{$$ = genNode2(C_INTEGER,empty);}
+		{$$ = NULL;genNode2(C_INTEGER,empty);}
 		;
 
 unlabeled_statement :
@@ -283,7 +283,7 @@ simple_expression :
 simple_expression_list : 
 		simple_expression_list additive_operator term {$$ = genNode4(C_EXPR,NULL,$2,$3); $$->next = $1;}
 		|
-		{$$ = genNode2(C_EXPR,empty);}
+		{$$ = NULL; genNode2(C_EXPR,empty);}
 		;
 
 additive_operator : 
@@ -301,7 +301,7 @@ term :
 term_list : 
 		term_list multiplicative_operator factor {$$ = genNode4(C_EXPR,NULL,$2,$3); $$->next = $1;}
 		|
-		{$$ = genNode2(C_EXPR,empty);}
+		{$$ = NULL;genNode2(C_EXPR,empty);}
 		;
 
 multiplicative_operator : 
@@ -339,7 +339,7 @@ expression_list :
 		|
 		expression_list COMMA expression {$$ = $3; $3->next = $1;}
 		|
-		{$$ = genNode2(C_EXPR,empty);}
+		{$$ = genNode2(C_EXPR,NULL);}
 		;
 
 identifier : 
